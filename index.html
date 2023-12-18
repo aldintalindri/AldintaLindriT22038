@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="./resources/ol.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css">
+        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+        <link rel="stylesheet" href="./resources/qgis2web.css">
+		<link rel="stylesheet" href="style 2.css" type="text/css">
+		<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<title>WebGIS Penginderaan Jauh</title>
+</head>
+
+<body>
+    <div id="peta" class="peta"></div>
+    <div id="map-coordinates" class="map-coordinates"></div>
+    <center>
+        <h1>PETA PENGGUNAAN LAHAN KECAMATAN DUKUN, PANCENG, DAN SIDAYU</h1>
+        <h1>KABUPATEN GRESIK</h1>
+        <H3>WebGIS Penginderaan Jauh</H3>
+    </center>
+    <div id="map" class="map" style="height: 500px; width: 100%; background-color: blue;"></div>
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content"></div>
+    </div>
+    <div id="posisi_koordinat"></div>
+    
+    <!-- Tambahkan kontrol untuk mengganti tampilan peta -->
+    <div id="tampilan_peta" class="tampilan-peta ol-unselectable ol-control">
+        <button title="Ganti Tampilan Peta" onclick="gantiTampilanPeta()", style="color: #000080;">Satelit</button>
+    </div>
+    <div id="skala_peta" class="ol-control ol-unselectable ol-scale-line"></div>
+    <div id="legenda" class="legenda">
+        <h2>Legenda</h2>
+        <ul>
+            <li><span class="legend-box sungai-legend"></span> Sungai</li>
+            <li><span class="legend-box jalan-legend"></span> Jalan</li>
+            <li><span class="legend-box jalan-tol-legend"></span> Pabrik</li>
+            <li><span class="legend-box waduk-legend"></span> Waduk</li>
+            <li><span class="legend-box perkebunan-legend"></span> Tambang</li>
+            <li><span class="legend-box tambak-legend"></span> Tambak</li>
+            <li><span class="legend-box pemukiman-legend"></span> Pemukiman</li>
+            <li><span class="legend-box ladang-legend"></span> Bukit Kapur</li>
+            <li><span class="legend-box sawah-irigasi-legend"></span> Sawah Irigasi</li>
+        </ul>
+    </div>
+    <div style="width: 80%; margin: auto;">
+        <canvas id="perubahanLahanChart"></canvas>
+    </div>
+    <div id="pesanBerjalan" style="color: black; background-color: green; padding: 2px; text-align: center;">
+        <marquee behavior="scroll" direction="left">
+            Website ini dirancang oleh Aldinta Lindri Tripujiantarari- 
+            Die Website wurde von Aldinta Lindri Tripujiantarari- 
+            This website was designed by Aldinta Lindri Tripujiantarari-
+        </marquee>
+    </div>
+    <center>
+        <div class="copyright">
+            &copy; 2023 Aldinta Lindri Tripujiantari. All rights reserved.
+        </div>
+    </center>
+    <style>
+        /* Tambahkan gaya untuk legenda */
+        #legenda {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            z-index: 1;
+            margin-top: 50px;
+        }
+
+        .legenda h2 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .legenda ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .legenda li {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        /* Tambahkan warna untuk setiap kategori legenda */
+        .sungai-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: pink; /* Warna biru untuk Sungai */
+            margin-right: 5px;
+        }
+
+        .jalan-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: red; /* Warna merah untuk Jalan */
+            margin-right: 5px;
+        }
+
+        .jalan-tol-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: brown; /* Warna hijau untuk Jalan Tol */
+            margin-right: 5px;
+        }
+
+        .waduk-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: blue; /* Warna merah untuk Waduk */
+            margin-right: 5px;
+        }
+
+        .perkebunan-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: black; /* Warna ungu untuk Perkebunan */
+            margin-right: 5px;
+        }
+
+        .tambak-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: lightblue; /* Warna oranye untuk Tambak */
+            margin-right: 5px;
+        }
+
+        .pemukiman-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: orange; /* Warna kuning gelap untuk Pemukiman */
+            margin-right: 5px;
+        }
+
+        .ladang-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: grey; /* Warna merah gelap untuk Ladang */
+            margin-right: 5px;
+        }
+
+        .sawah-irigasi-legend {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: lightgreen; /* Warna biru hijau untuk Sawah Irigasi */
+            margin-right: 5px;
+        }
+    </style>
+    <script type="text/javascript">
+         // Data perubahan penggunaan lahan
+         var dataPerubahanLahan = [
+            { jenis: 'Tambak', pl2019: 5, pl2023: 5 },
+            { jenis: 'Pemukiman', pl2019: 9, pl2023: 9 },
+            { jenis: 'Pabrik', pl2019: 1, pl2023:  1 },
+            { jenis: 'Sawah', pl2019: 5, pl2023: 5 },
+            { jenis: 'Bukit Kapur', pl2019: 1, pl2023: 0 },
+            { jenis: 'Waduk', pl2019: 1, pl2023: 1 },
+            // ... tambahkan data lainnya sesuai kebutuhan ...
+        ];
+
+        // Inisialisasi chart
+        var ctx = document.getElementById('perubahanLahanChart').getContext('2d');
+        var perubahanLahanChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dataPerubahanLahan.map(item => item.jenis),
+                datasets: [{
+                    label: 'PL 2019',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    data: dataPerubahanLahan.map(item => item.pl2019)
+                }, {
+                    label: 'PL 2023',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    data: dataPerubahanLahan.map(item => item.pl2023)
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        var posisikoordinat = new ol.control.MousePosition
+        ({
+            coordinateFormat: ol.coordinate.createStringXY(7),
+            projection: 'EPSG:32749',
+            target: document.getElementById('posisi_koordinat'),
+            className: 'custom-mouse-position'
+        });
+
+        var osm = new ol.layer.Tile({
+            source: new ol.source.OSM()
+        });
+        var layer = [osm, peta_jalan, peta_admin];
+        var view = new ol.View({
+            center: ol.proj.fromLonLat([112.507228, -6.958097]),
+            zoom: 12
+        });
+        var map = new ol.Map({
+            target: 'map',
+            layers: layer,
+            view: view,
+            controls: ol.control.defaults().extend([posisikoordinat]),
+        });
+        map.addControl(new ol.control.ZoomSlider());
+        map.addControl(new ol.control.Zoom());
+        map.addControl(new ol.control.ZoomToExtent({
+            extent: view.getProjection().getExtent()
+        }));
+        var layerSwitcher = new ol.control.LayerSwitcher({
+            tipLabel: 'Basemap Switcher'
+        });
+        map.addControl(layerSwitcher);
+        var fullscreenControl = new ol.control.FullScreen();
+        map.addControl(fullscreenControl);
+        var popup = new ol.Overlay({
+            element: document.getElementById('popup'),
+            positioning: 'bottom-center',
+            stopEvent: false
+        });
+        function gantiTampilanPeta() {
+    var layers = map.getLayers().getArray();
+    var layerSatelit = layers.find(layer => layer.get('name') === 'Satelit');
+    var buttonElement = document.getElementById('btnSatelit'); // Ganti 'btnSatelit' dengan ID yang sesuai
+
+    if (layerSatelit) {
+        // Jika layer satelit sudah ada, nonaktifkan
+        map.removeLayer(layerSatelit);
+        buttonElement.style.backgroundColor = '#3498db'; // Warna tombol ketika dinonaktifkan (biru)
+        buttonElement.style.color = '#fff'; // Warna teks tombol ketika dinonaktifkan (putih)
+    } else {
+        // Jika layer satelit belum ada, aktifkan
+        var satelitLayer = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                attributions: ['&copy; <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9">ArcGIS</a>']
+            }),
+            name: 'Satelit'
+        });
+
+        map.addLayer(satelitLayer);
+        buttonElement.style.backgroundColor = '#e74c3c'; // Warna tombol ketika diaktifkan (merah)
+        buttonElement.style.color = '#fff'; // Warna teks tombol ketika diaktifkan (putih)
+    }
+}
+
+    </script>
+	
+        <script src="resources/qgis2web_expressions.js"></script>
+        <script src="resources/polyfills.js"></script>
+        <script src="./resources/functions.js"></script>
+        <script src="./resources/ol.js"></script>
+        <script src="./resources/ol-layerswitcher.js"></script>
+        <script src="layers/Sawah_1.js"></script>
+		<script src="layers/Pemukiman_2.js"></script>
+		<script src="layers/Tambak_3.js"></script>
+		<script src="layers/Tegalan_4.js"></script>
+		<script src="layers/Tambang_5.js"></script>
+		<script src="layers/Gedung_6.js"></script>
+		<script src="layers/Jalan_7.js"></script>
+		<script src="layers/Sungai_8.js"></script>
+        <script src="styles/Sawah_1_style.js"></script>
+		<script src="styles/Pemukiman_2_style.js"></script>
+		<script src="styles/Tambak_3_style.js"></script>
+		<script src="styles/Tegalan_4_style.js"></script>
+		<script src="styles/Tambang_5_style.js"></script>
+		<script src="styles/Gedung_6_style.js"></script>
+		<script src="styles/Jalan_7_style.js"></script>
+		<script src="styles/Sungai_8_style.js"></script>
+        <script src="./layers/layers.js" type="text/javascript"></script> 
+        <script src="./resources/Autolinker.min.js"></script>
+        <script src="./resources/qgis2web.js"></script>
+    </body>
+</html>
